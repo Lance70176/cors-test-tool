@@ -287,6 +287,33 @@
             .method-select {
                 justify-content: center;
             }
+            
+            .detail-row {
+                flex-direction: column;
+                gap: 5px;
+                padding: 10px 0;
+            }
+            
+            .detail-label {
+                font-size: 13px;
+                color: #777;
+            }
+            
+            .detail-value {
+                font-size: 13px;
+                word-break: break-all;
+                text-align: left;
+            }
+            
+            .result-status {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .status-icon {
+                font-size: 2.5em;
+            }
         }
     </style>
 </head>
@@ -541,12 +568,14 @@
             }
             
             historyCard.style.display = 'block';
-            historyList.innerHTML = testHistory.map(item => `
+            historyList.innerHTML = testHistory.map(item => {
+                const timeStr = item.time ? new Date(item.time).toLocaleTimeString() : '-';
+                return `
                 <div class="history-item ${item.success ? 'success' : 'error'}" onclick="loadFromHistory('${item.url}')">
                     <span class="history-url">[${item.method}] ${item.url}</span>
-                    <span class="history-time">${item.time.toLocaleTimeString()}</span>
+                    <span class="history-time">${timeStr}</span>
                 </div>
-            `).join('');
+            `}).join('');
         }
         
         // 從歷史載入
