@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨域測試工具 | CORS Test Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .method-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .method-btn {
+            padding: 8px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .method-btn:hover {
+            border-color: #667eea;
+        }
+        
+        .method-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-container {
+            display: none;
+        }
+        
+        .result-container.show {
+            display: block;
+        }
+        
+        .result-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .result-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .result-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-icon {
+            font-size: 2em;
+        }
+        
+        .status-text h3 {
+            margin-bottom: 5px;
+        }
+        
+        .status-text p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 14px;
+        }
+        
+        .response-body {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow: auto;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history-list {
+            margin-top: 20px;
+        }
+        
+        .history-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:hover {
+            background: #e9ecef;
+        }
+        
+        .history-item.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .history-item.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .history-url {
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+            flex: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .history-time {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .method-select {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 跨域測試工具</h1>
+            <p>CORS Test Tool - 快速測試跨域請求是否成功</p>
+        </header>
+        
+        <div class="card">
+            <h2>請求設定</h2>
+            
+            <div class="method-select">
+                <button class="method-btn active" data-method="GET">GET</button>
+                <button class="method-btn" data-method="POST">POST</button>
+                <button class="method-btn" data-method="PUT">PUT</button>
+                <button class="method-btn" data-method="DELETE">DELETE</button>
+            </div>
+            
+            <div class="input-group">
+                <label for="targetUrl">測試網址 URL</label>
+                <input type="text" id="targetUrl" placeholder="https://api.example.com/test" value="">
+            </div>
+            
+            <button class="btn-primary" id="testButton" onclick="sendRequest()">
+                🚀 發送跨域請求
+            </button>
+        </div>
+        
+        <div class="card result-container" id="resultContainer">
+            <h2>測試結果</h2>
+            
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>發送請求中...</p>
+            </div>
+            
+            <div id="resultContent">
+                <div class="result-status" id="resultStatus">
+                    <span class="status-icon" id="statusIcon">✅</span>
+                    <div class="status-text">
+                        <h3 id="statusTitle">請求成功</h3>
+                        <p id="statusDesc">成功收到伺服器回應</p>
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">狀態碼</span>
+                    <span class="detail-value" id="statusCode">200 OK</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">請求方法</span>
+                    <span class="detail-value" id="requestMethod">GET</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">請求網址</span>
+                    <span class="detail-value" id="requestUrl">-</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">開始時間</span>
+                    <span class="detail-value" id="startTime">-</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">結束時間</span>
+                    <span class="detail-value" id="endTime">-</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">耗時</span>
+                    <span class="detail-value" id="duration">-</span>
+                </div>
+                
+                <div id="responseSection">
+                    <h3 style="margin: 20px 0 10px; color: #333;">回應內容</h3>
+                    <div class="response-body" id="responseBody">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="historyCard" style="display: none;">
+            <h2>測試歷史</h2>
+            <div class="history-list" id="historyList"></div>
+        </div>
+        
+        <footer>
+            <p>© 2026 CORS Test Tool | 純前端測試，資料不會傳送到伺服器</p>
+        </footer>
+    </div>
+
+    <script>
+        let currentMethod = 'GET';
+        let testHistory = JSON.parse(localStorage.getItem('corsTestHistory') || '[]');
+        
+        // 初始化方法選擇
+        document.querySelectorAll('.method-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentMethod = this.dataset.method;
+            });
+        });
+        
+        // 發送請求
+        async function sendRequest() {
+            const url = document.getElementById('targetUrl').value.trim();
+            
+            if (!url) {
+                alert('請輸入測試網址');
+                return;
+            }
+            
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('網址必須以 http:// 或 https:// 開頭');
+                return;
+            }
+            
+            const resultContainer = document.getElementById('resultContainer');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultContainer.classList.add('show');
+            loadingIndicator.style.display = 'block';
+            resultContent.style.display = 'none';
+            
+            const startTime = new Date();
+            
+            try {
+                const response = await fetch(url, {
+                    method: currentMethod,
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*'
+                    }
+                });
+                
+                const endTime = new Date();
+                const duration = endTime - startTime;
+                
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                } catch (e) {
+                    responseText = '(無法讀取回應內容)';
+                }
+                
+                // 顯示結果
+                displayResult({
+                    success: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    method: currentMethod,
+                    url: url,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: duration,
+                    response: responseText
+                });
+                
+                // 加入歷史
+                addToHistory({
+                    url: url,
+                    method: currentMethod,
+                    status: response.status,
+                    success: response.ok,
+                    time: startTime
+                });
+                
+            } catch (error) {
+                const endTime = new Date();
+                const duration = endTime - startTime;
+                
+                displayResult({
+                    success: false,
+                    status: 0,
+                    statusText: 'CORS Error',
+                    method: currentMethod,
+                    url: url,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: duration,
+                    response: error.message,
+                    isError: true
+                });
+                
+                addToHistory({
+                    url: url,
+                    method: currentMethod,
+                    status: 0,
+                    success: false,
+                    time: startTime
+                });
+            }
+        }
+        
+        // 顯示結果
+        function displayResult(data) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultContent = document.getElementById('resultContent');
+            const resultStatus = document.getElementById('resultStatus');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusDesc = document.getElementById('statusDesc');
+            
+            loadingIndicator.style.display = 'none';
+            resultContent.style.display = 'block';
+            
+            if (data.success) {
+                resultStatus.className = 'result-status success';
+                statusIcon.textContent = '✅';
+                statusTitle.textContent = `請求成功 (${data.status})`;
+                statusDesc.textContent = '成功收到伺服器回應，CORS 沒有限制';
+            } else {
+                resultStatus.className = 'result-status error';
+                statusIcon.textContent = '❌';
+                statusTitle.textContent = data.isError ? '請求失敗 (CORS 錯誤)' : `請求失敗 (${data.status})`;
+                statusDesc.textContent = data.isError 
+                    ? '瀏覽器攔截了跨域請求，CORS 未正確配置' 
+                    : '伺服器回傳了錯誤狀態碼';
+            }
+            
+            document.getElementById('statusCode').textContent = `${data.status} ${data.statusText}`;
+            document.getElementById('requestMethod').textContent = data.method;
+            document.getElementById('requestUrl').textContent = data.url;
+            document.getElementById('startTime').textContent = data.startTime.toLocaleString();
+            document.getElementById('endTime').textContent = data.endTime.toLocaleString();
+            document.getElementById('duration').textContent = `${data.duration} ms`;
+            document.getElementById('responseBody').textContent = data.response;
+        }
+        
+        // 加入歷史
+        function addToHistory(item) {
+            testHistory.unshift(item);
+            if (testHistory.length > 10) {
+                testHistory = testHistory.slice(0, 10);
+            }
+            localStorage.setItem('corsTestHistory', JSON.stringify(testHistory));
+            renderHistory();
+        }
+        
+        // 渲染歷史
+        function renderHistory() {
+            const historyCard = document.getElementById('historyCard');
+            const historyList = document.getElementById('historyList');
+            
+            if (testHistory.length === 0) {
+                historyCard.style.display = 'none';
+                return;
+            }
+            
+            historyCard.style.display = 'block';
+            historyList.innerHTML = testHistory.map(item => `
+                <div class="history-item ${item.success ? 'success' : 'error'}" onclick="loadFromHistory('${item.url}')">
+                    <span class="history-url">[${item.method}] ${item.url}</span>
+                    <span class="history-time">${item.time.toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        }
+        
+        // 從歷史載入
+        function loadFromHistory(url) {
+            document.getElementById('targetUrl').value = url;
+        }
+        
+        // 初始化
+        renderHistory();
+    </script>
+</body>
+</html>
